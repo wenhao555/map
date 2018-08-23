@@ -19,6 +19,9 @@ import com.baidu.mapapi.model.LatLng;
 
 public class MainActivity extends Activity {
 
+    // TODO: 2018/8/23 待实施——进入软件进行if语句判断是否有传感器，GPS，基站，WLAN等权限，如果没有，进行动态申请跳转
+    // TODO: 2018/8/23 待实施——动态刷新，每过*秒进行刷新以达到实时定位效果，具体实现方式同按下按钮定位相同
+
     //地图控件
     public MapView mapView = null;
     //百度地图对象
@@ -39,6 +42,8 @@ public class MainActivity extends Activity {
         public void onReceiveLocation(BDLocation location) {
             longitude = location.getLongitude();
             latitude = location.getLatitude();
+
+            // TODO: 2018/8/23 待实施——实施定位按钮，当按下定位按钮，地图进行重新定位
             boolean isLocateFailed = false;//定位是否成功
             //MAP VIEW 销毁后不在处理新接收的位置
             if (location == null || mapView == null)
@@ -81,8 +86,11 @@ public class MainActivity extends Activity {
 
     private void initData() {
         locationClient.start();//开始定位
-        baiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);//设置为一般地图
-        //baiduMap.setMapType(BaiduMap.MAP_TYPE_SATELLITE);//设置为卫星地图
+
+        // TODO: 2018/8/23  待解决——实施按钮进行卫星和普通地图之间的切换
+
+//        baiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);//设置为一般地图
+        baiduMap.setMapType(BaiduMap.MAP_TYPE_SATELLITE);//设置为卫星地图
         baiduMap.setTrafficEnabled(true);//开启交通图
     }
 
@@ -96,7 +104,6 @@ public class MainActivity extends Activity {
         this.setLocationOption();//设置定位参数
     }
 
-    //三个状态实现地图生命周期管理
     @Override
     protected void onDestroy() {
         //退出销毁
@@ -127,11 +134,15 @@ public class MainActivity extends Activity {
 
     private void setLocationOption() {
         LocationClientOption option = new LocationClientOption();
+
+        // TODO: 2018/8/23 待实施——实现按钮选择GPS，基站，WLAN进行定位
         option.setOpenGps(true);//打开GPS
+
         option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);//设置定位模式
         option.setCoorType("bd0911");//返回的定位结果是百度经纬度，默认值是gcj02
         option.setScanSpan(5000);//设置发起定位请求的时间间隔为5000ms
         option.setIsNeedAddress(true);//返回的定位结果饱饭地址信息
+        // TODO: 2018/8/23 待实施——传感器判断，实施360°方向箭头指示
         option.setNeedDeviceDirect(true);// 返回的定位信息包含手机的机头方向
         locationClient.setLocOption(option);
     }
