@@ -17,12 +17,6 @@ import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.model.LatLng;
 
-
-/**
- * Created by Administrator on 2016/8/8 0008.
- */
-
-
 public class MainActivity extends Activity {
 
     //地图控件
