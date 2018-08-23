@@ -1,8 +1,9 @@
 package com.example.administrator.baidumap_testdemo_a;
-
-
-import android.app.Activity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.Button;
+import android.widget.Toast;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
@@ -10,142 +11,185 @@ import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.baidu.mapapi.SDKInitializer;
 import com.baidu.mapapi.map.BaiduMap;
-import com.baidu.mapapi.map.BitmapDescriptor;
+import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.model.LatLng;
 
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    private MapView mMapView;
+    private BaiduMap mBaiduMap;
+    public LocationClient mLocationClient;
+    public BDLocationListener myListener = new MyLocationListener();
+    private Button bt;
+    private Button button;
+    private Button buttons;
+    private LatLng latLng;
+    private boolean isFirstLoc = true; // 是否首次定位
 
     // TODO: 2018/8/23 待实施——进入软件进行if语句判断是否有传感器，GPS，基站，WLAN等权限，如果没有，进行动态申请跳转
     // TODO: 2018/8/23 待实施——动态刷新，每过*秒进行刷新以达到实时定位效果，具体实现方式同按下按钮定位相同
-
-    //地图控件
-    public MapView mapView = null;
-    //百度地图对象
-    public BaiduMap baiduMap = null;
-    //定位相关声明
-    public LocationClient locationClient = null;
-    //自定义图标
-    BitmapDescriptor mCurrentMarket = null;
-    //是否首次定位
-    boolean isFirstLoc = true;
-    //得到经纬度
-    private double longitude;
-    private double latitude;
-    private MyLocationListener myLitenner = new MyLocationListener();
-
-    private class MyLocationListener implements BDLocationListener {
-        @Override
-        public void onReceiveLocation(BDLocation location) {
-            longitude = location.getLongitude();
-            latitude = location.getLatitude();
-
-            // TODO: 2018/8/23 待实施——实施定位按钮，当按下定位按钮，地图进行重新定位
-            boolean isLocateFailed = false;//定位是否成功
-            //MAP VIEW 销毁后不在处理新接收的位置
-            if (location == null || mapView == null)
-                return;
-            MyLocationData locData = new MyLocationData.Builder()
-                    //此处设置开发者获取到的方向信息，顺时针0-360
-                    .accuracy(location.getRadius())
-                    .direction(100).latitude(location.getLatitude())
-                    .longitude(location.getLongitude()).build();
-            baiduMap.setMyLocationData(locData);
-            //设置定位数据
-            if (isFirstLoc) {
-                isFirstLoc = false;
-                LatLng ll = new LatLng(location.getLatitude(), location.getLongitude());
-                MapStatusUpdate mapStatusUpdate = MapStatusUpdateFactory.newLatLngZoom(ll, 16);
-                //设置地图中心点以及缩放级别
-                baiduMap.animateMapStatus(mapStatusUpdate);
-            }
-
-
-        }
-
-
-    }
-
+    // TODO: 2018/8/23 待实施——实施定位按钮，当按下定位按钮，地图进行重新定位
+    // TODO: 2018/8/23  待解决——实施按钮进行卫星和普通地图之间的切换
+    // TODO: 2018/8/23 待实施——实现按钮选择GPS，基站，WLAN进行定位
+    // TODO: 2018/8/23 待实施——传感器判断，实施360°方向箭头指示
 
     @Override
-
-
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //在使用SDK个组件之前初始化context信息，传入ApplicationContext
-        //注意改方法在在setContextView方法之前实现
+        //在使用SDK各组件之前初始化context信息，传入ApplicationContext
+        //注意该方法要再setContentView方法之前实现
         SDKInitializer.initialize(getApplicationContext());
         setContentView(R.layout.activity_main);
         initView();
-        initData();
+        initMap();
     }
 
 
-    private void initData() {
-        locationClient.start();//开始定位
+    private void initMap() {
+        //获取地图控件引用
+        mBaiduMap = mMapView.getMap();
+        //普通地图
+        mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
+        mBaiduMap.setMyLocationEnabled(true);
 
-        // TODO: 2018/8/23  待解决——实施按钮进行卫星和普通地图之间的切换
+        //默认显示普通地图
+        mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
+        //开启交通图
+        //mBaiduMap.setTrafficEnabled(true);
+        //开启热力图
+        //mBaiduMap.setBaiduHeatMapEnabled(true);
+        // 开启定位图层
+        mBaiduMap.setMyLocationEnabled(true);
+        mLocationClient = new LocationClient(getApplicationContext());     //声明LocationClient类
+        //配置定位SDK参数
+        initLocation();
+        mLocationClient.registerLocationListener(myListener);    //注册监听函数
+        //开启定位
+        mLocationClient.start();
+        //图片点击事件，回到定位点
+        mLocationClient.requestLocation();
+    }
 
-//        baiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);//设置为一般地图
-        baiduMap.setMapType(BaiduMap.MAP_TYPE_SATELLITE);//设置为卫星地图
-        baiduMap.setTrafficEnabled(true);//开启交通图
+    //配置定位SDK参数
+    private void initLocation() {
+        LocationClientOption option = new LocationClientOption();
+        option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy
+        );//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
+        option.setCoorType("bd09ll");//可选，默认gcj02，设置返回的定位结果坐标系
+        int span = 1000;
+        option.setScanSpan(span);//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
+        option.setIsNeedAddress(true);//可选，设置是否需要地址信息，默认不需要
+        option.setOpenGps(true);//可选，默认false,设置是否使用gps
+        option.setLocationNotify(true);//可选，默认false，设置是否当GPS有效时按照1S/1次频率输出GPS结果
+        option.setIsNeedLocationDescribe(true);//可选，默认false，设置是否需要位置语义化结果，可以在BDLocation
+        // .getLocationDescribe里得到，结果类似于“在北京天安门附近”
+        option.setIsNeedLocationPoiList(true);//可选，默认false，设置是否需要POI结果，可以在BDLocation.getPoiList里得到
+        option.setIgnoreKillProcess(false);
+        option.setOpenGps(true); // 打开gps
+
+        //可选，默认true，定位SDK内部是一个SERVICE，并放到了独立进程，设置是否在stop的时候杀死这个进程，默认不杀死
+        option.SetIgnoreCacheException(false);//可选，默认false，设置是否收集CRASH信息，默认收集
+        option.setEnableSimulateGps(false);//可选，默认false，设置是否需要过滤GPS仿真结果，默认需要
+        mLocationClient.setLocOption(option);
+    }
+
+    //实现BDLocationListener接口,BDLocationListener为结果监听接口，异步获取定位结果
+    public class MyLocationListener implements BDLocationListener {
+
+        @Override
+        public void onReceiveLocation(BDLocation location) {
+            latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            // 构造定位数据
+            MyLocationData locData = new MyLocationData.Builder()
+                    .accuracy(location.getRadius())
+                    // 此处设置开发者获取到的方向信息，顺时针0-360
+                    .direction(100).latitude(location.getLatitude())
+                    .longitude(location.getLongitude()).build();
+            // 设置定位数据
+            mBaiduMap.setMyLocationData(locData);
+            // 当不需要定位图层时关闭定位图层
+            //mBaiduMap.setMyLocationEnabled(false);
+            if (isFirstLoc) {
+                isFirstLoc = false;
+                LatLng ll = new LatLng(location.getLatitude(),
+                        location.getLongitude());
+                MapStatus.Builder builder = new MapStatus.Builder();
+                builder.target(ll).zoom(18.0f);
+                mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
+
+                if (location.getLocType() == BDLocation.TypeGpsLocation) {
+                    // GPS定位结果
+                    Toast.makeText(MainActivity.this, location.getAddrStr(), Toast.LENGTH_SHORT).show();
+                } else if (location.getLocType() == BDLocation.TypeNetWorkLocation) {
+                    // 网络定位结果
+                    Toast.makeText(MainActivity.this, location.getAddrStr(), Toast.LENGTH_SHORT).show();
+
+                } else if (location.getLocType() == BDLocation.TypeOffLineLocation) {
+                    // 离线定位结果
+                    Toast.makeText(MainActivity.this, location.getAddrStr(), Toast.LENGTH_SHORT).show();
+
+                } else if (location.getLocType() == BDLocation.TypeServerError) {
+                    Toast.makeText(MainActivity.this, "服务器错误，请检查", Toast.LENGTH_SHORT).show();
+                } else if (location.getLocType() == BDLocation.TypeNetWorkException) {
+                    Toast.makeText(MainActivity.this, "网络错误，请检查", Toast.LENGTH_SHORT).show();
+                } else if (location.getLocType() == BDLocation.TypeCriteriaException) {
+                    Toast.makeText(MainActivity.this, "手机模式错误，请检查是否飞行", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
     }
 
     private void initView() {
-        mapView = (MapView) findViewById(R.id.mv_map);
-        baiduMap = mapView.getMap();
-        //开启定位图层
-        baiduMap.setMyLocationEnabled(true);
-        locationClient = new LocationClient(getApplicationContext());//实例化LocationClient类
-        locationClient.registerLocationListener(myLitenner);//注册监听函数
-        this.setLocationOption();//设置定位参数
+        mMapView = (MapView) findViewById(R.id.bmapView);
+        bt = (Button) findViewById(R.id.bt);
+        bt.setOnClickListener(this);
+        button = (Button) findViewById(R.id.button);
+        button.setOnClickListener(this);
+        buttons = (Button) findViewById(R.id.buttons);
+        buttons.setOnClickListener(this);
     }
 
     @Override
     protected void onDestroy() {
-        //退出销毁
-        locationClient.stop();
-        baiduMap.setMyLocationEnabled(false);
         super.onDestroy();
-        mapView.onDestroy();
-        mapView = null;
+        //在activity执行onDestroy时执行mMapView.onDestroy()，实现地图生命周期管理
+        mMapView.onDestroy();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        mapView.onResume();
+        //在activity执行onResume时执行mMapView. onResume ()，实现地图生命周期管理
+        mMapView.onResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        mapView.onPause();
+        //在activity执行onPause时执行mMapView. onPause ()，实现地图生命周期管理
+        mMapView.onPause();
     }
 
-
-    /**
-     * 设置定位参数
-     */
-
-
-    private void setLocationOption() {
-        LocationClientOption option = new LocationClientOption();
-
-        // TODO: 2018/8/23 待实施——实现按钮选择GPS，基站，WLAN进行定位
-        option.setOpenGps(true);//打开GPS
-
-        option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);//设置定位模式
-        option.setCoorType("bd0911");//返回的定位结果是百度经纬度，默认值是gcj02
-        option.setScanSpan(5000);//设置发起定位请求的时间间隔为5000ms
-        option.setIsNeedAddress(true);//返回的定位结果饱饭地址信息
-        // TODO: 2018/8/23 待实施——传感器判断，实施360°方向箭头指示
-        option.setNeedDeviceDirect(true);// 返回的定位信息包含手机的机头方向
-        locationClient.setLocOption(option);
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.bt:
+                //把定位点再次显现出来
+                MapStatusUpdate mapStatusUpdate = MapStatusUpdateFactory.newLatLng(latLng);
+                mBaiduMap.animateMapStatus(mapStatusUpdate);
+                break;
+            case R.id.button:
+                //卫星地图
+                mBaiduMap.setMapType(BaiduMap.MAP_TYPE_SATELLITE);
+                break;
+            case R.id.buttons:
+                //普通地图
+                mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
+                break;
+        }
     }
-
 
 }
