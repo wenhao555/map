@@ -3,6 +3,8 @@
     package="com.example.administrator.baidumap_testdemo_a">
 
     <!--给予相应权限-->
+    <!--传感器-->
+    <uses-permission android:name="com.android.permission.BODY_SENSORS" />
     <!--读取系统信息，包含系统版本等信息，用作统计-->
     <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS" />
     <!--允许sd卡读权限，需读取地图数据，禁用后无法显示地图-->
