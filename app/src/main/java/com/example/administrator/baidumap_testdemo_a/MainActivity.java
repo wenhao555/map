@@ -203,6 +203,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 BDLocation location;
                 Toast.makeText(MainActivity.this, str, Toast.LENGTH_SHORT).show();
                 break;
+                //23
         }
     }
 
