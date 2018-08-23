@@ -1,7 +1,9 @@
 package com.example.administrator.baidumap_testdemo_a;
+
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -23,10 +25,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private BaiduMap mBaiduMap;
     public LocationClient mLocationClient;
     public BDLocationListener myListener = new MyLocationListener();
-    private Button bt;
-    private Button button;
-    private Button buttons;
+    private Button bt, button, buttons, nowposition;
     private LatLng latLng;
+    private String str;
     private boolean isFirstLoc = true; // 是否首次定位
 
     // TODO: 2018/8/23 待实施——进入软件进行if语句判断是否有传感器，GPS，基站，WLAN等权限，如果没有，进行动态申请跳转
@@ -38,6 +39,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //屏幕常亮
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.onCreate(savedInstanceState);
         //在使用SDK各组件之前初始化context信息，传入ApplicationContext
         //注意该方法要再setContentView方法之前实现
@@ -76,9 +79,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //配置定位SDK参数
     private void initLocation() {
         LocationClientOption option = new LocationClientOption();
-        option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy
-        );//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
-        option.setCoorType("bd09ll");//可选，默认gcj02，设置返回的定位结果坐标系
+        option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
+        //可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
+        option.setCoorType("bd09ll");
+        //可选，默认gcj02，设置返回的定位结果坐标系
         int span = 1000;
         option.setScanSpan(span);//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
         option.setIsNeedAddress(true);//可选，设置是否需要地址信息，默认不需要
@@ -111,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             // 设置定位数据
             mBaiduMap.setMyLocationData(locData);
             // 当不需要定位图层时关闭定位图层
-            //mBaiduMap.setMyLocationEnabled(false);
+            mBaiduMap.setMyLocationEnabled(false);
             if (isFirstLoc) {
                 isFirstLoc = false;
                 LatLng ll = new LatLng(location.getLatitude(),
@@ -126,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else if (location.getLocType() == BDLocation.TypeNetWorkLocation) {
                     // 网络定位结果
                     Toast.makeText(MainActivity.this, location.getAddrStr(), Toast.LENGTH_SHORT).show();
+                    str = location.getAddrStr();
 
                 } else if (location.getLocType() == BDLocation.TypeOffLineLocation) {
                     // 离线定位结果
@@ -150,6 +155,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         button.setOnClickListener(this);
         buttons = (Button) findViewById(R.id.buttons);
         buttons.setOnClickListener(this);
+        nowposition = findViewById(R.id.nowposition);
+        nowposition.setOnClickListener(this);
     }
 
     @Override
@@ -179,6 +186,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.bt:
                 //把定位点再次显现出来
                 MapStatusUpdate mapStatusUpdate = MapStatusUpdateFactory.newLatLng(latLng);
+               //复位后显示状态为普通地图
+                mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
                 mBaiduMap.animateMapStatus(mapStatusUpdate);
                 break;
             case R.id.button:
@@ -188,6 +197,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.buttons:
                 //普通地图
                 mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
+                break;
+            case R.id.nowposition:
+                //Toast出当前位置 获取值为第一次进入的值（String）：str
+                BDLocation location;
+                Toast.makeText(MainActivity.this, str, Toast.LENGTH_SHORT).show();
                 break;
         }
     }
