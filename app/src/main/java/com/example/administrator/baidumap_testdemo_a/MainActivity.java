@@ -1,17 +1,19 @@
 package com.example.administrator.baidumap_testdemo_a;
 
+import android.Manifest;
 import android.animation.ObjectAnimator;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
-import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.Toast;
 import android.widget.ZoomControls;
-
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
@@ -24,7 +26,7 @@ import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.model.LatLng;
-
+import com.example.administrator.baidumap_testdemo_a.MyUtil.MyToast;
 import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -35,30 +37,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ImageButton bt, button, buttons, ib_Eject;
     private LatLng latLng;
     private String str;//当前位置
+    private boolean openTraffic = false;//是否打开交通地图信息
     private boolean isFirstLoc = true; // 是否首次定位
     private boolean isAnim = true;//选项卡是否开启
+    private boolean isSwitchMap = true; //卫星和普通地图切换
+    private static final int BAIDU_READ_PHONE_STATE = 100;//定位权限请求
+    private static final int PRIVATE_CODE = 1315;//开启GPS权限
+    private LocationManager lm;//位置管理
 
     // TODO: 2018/8/23 已完成———— 实施定位按钮，当按下定位按钮，地图进行重新定位————实施按钮进行卫星和普通地图之间的切换————防止连点造成动画加载异常
-
-
     // TODO: 2018/8/23 待实施——进入软件进行if语句判断是否有传感器，GPS，基站，WLAN等权限，如果没有，进行动态申请跳转
     // TODO: 2018/8/23 待实施——动态刷新，每过*秒进行刷新以达到实时定位效果，具体实现方式同按下按钮定位相同
     // TODO: 2018/8/23 待实施——实现按钮选择GPS，基站，WLAN进行定位
     // TODO: 2018/8/23 待实施——传感器判断，实施360°方向箭头指示
     // TODO: 2018/8/23 待实施——当多个应用启动时，内存发生饱和状态，对APP进行保活状态，防止APP被恶意杀死
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //屏幕常亮
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        //    getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         // TODO: 2018/8/23 屏幕常亮，暂未解决~
 
         super.onCreate(savedInstanceState);
         //在使用SDK各组件之前初始化context信息，传入ApplicationContext
         //注意该方法要再setContentView方法之前实现
         SDKInitializer.initialize(getApplicationContext());
+
+        getpermission();
         setContentView(R.layout.activity_main);
+
         initView();
         initMap();
         // TODO: 2018/8/23 switch 控件设置
@@ -67,12 +74,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (child != null && (child instanceof ImageView || child instanceof ZoomControls)) {
             child.setVisibility(View.INVISIBLE);
             //去掉地图上比例尺
-            mMapView.showScaleControl(false);
+            mMapView.showScaleControl(true);
             // 隐藏缩放控件
             mMapView.showZoomControls(false);
         }
     }
-
 
     private void initMap() {
         //获取地图控件引用
@@ -136,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .direction(100).latitude(location.getLatitude())
                     .longitude(location.getLongitude()).build();
             // 设置定位数据
-//            mBaiduMap.setMyLocationData(locData);
+            mBaiduMap.setMyLocationData(locData);
             // 当不需要定位图层时关闭定位图层
 //            mBaiduMap.setMyLocationEnabled(false);
             if (isFirstLoc) {
@@ -149,22 +155,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 if (location.getLocType() == BDLocation.TypeGpsLocation) {
                     // GPS定位结果
-                    Toast.makeText(MainActivity.this, location.getAddrStr(), Toast.LENGTH_SHORT).show();
+                    MyToast.newToast(MainActivity.this, location.getAddrStr());
                 } else if (location.getLocType() == BDLocation.TypeNetWorkLocation) {
                     // 网络定位结果
-                    Toast.makeText(MainActivity.this, location.getAddrStr(), Toast.LENGTH_SHORT).show();
+                    MyToast.newToast(MainActivity.this, location.getAddrStr());
                     str = location.getAddrStr();
 
                 } else if (location.getLocType() == BDLocation.TypeOffLineLocation) {
                     // 离线定位结果
-                    Toast.makeText(MainActivity.this, location.getAddrStr(), Toast.LENGTH_SHORT).show();
+                    MyToast.newToast(MainActivity.this, location.getAddrStr());
 
                 } else if (location.getLocType() == BDLocation.TypeServerError) {
-                    Toast.makeText(MainActivity.this, "服务器错误，请检查", Toast.LENGTH_SHORT).show();
+                    MyToast.newToast(MainActivity.this, "服务器错误，请检查");
                 } else if (location.getLocType() == BDLocation.TypeNetWorkException) {
-                    Toast.makeText(MainActivity.this, "网络错误，请检查", Toast.LENGTH_SHORT).show();
+                    MyToast.newToast(MainActivity.this, "网络错误，请检查");
                 } else if (location.getLocType() == BDLocation.TypeCriteriaException) {
-                    Toast.makeText(MainActivity.this, "手机模式错误，请检查是否飞行", Toast.LENGTH_SHORT).show();
+                    MyToast.newToast(MainActivity.this, "手机模式错误，请检查是否飞行");
                 }
             }
         }
@@ -191,27 +197,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     ObjectAnimator upscale1 = ObjectAnimator.ofFloat(button, "alpha", 0, 1);
                     upscale1.setDuration(222);
                     upscale1.start();
-                    ObjectAnimator upXanim1 = ObjectAnimator.ofFloat(button, "TranslationX", 0, -130, -70, -100);
+                    ObjectAnimator upXanim1 = ObjectAnimator.ofFloat(button, "TranslationX", 0, px2dp(-130), px2dp(-70), px2dp(-100));
                     upXanim1.setDuration(333);
                     upXanim1.start();
-                    ObjectAnimator upYanim1 = ObjectAnimator.ofFloat(button, "TranslationY", 0, -100, -60, -80);
+                    ObjectAnimator upYanim1 = ObjectAnimator.ofFloat(button, "TranslationY", 0, px2dp(-100), px2dp(-60), px2dp(-80));
                     upYanim1.setDuration(333);
                     upYanim1.start();
                     //复位弹出
                     ObjectAnimator upscale2 = ObjectAnimator.ofFloat(bt, "alpha", 0, 1);
                     upscale2.setDuration(222);
                     upscale2.start();
-                    ObjectAnimator upYanim2 = ObjectAnimator.ofFloat(bt, "TranslationY", 0, -180, -120, -150);
+                    ObjectAnimator upYanim2 = ObjectAnimator.ofFloat(bt, "TranslationY", 0, px2dp(-180), px2dp(-120), px2dp(-150));
                     upYanim2.setDuration(666);
                     upYanim2.start();
                     //普通弹出
                     ObjectAnimator upscale3 = ObjectAnimator.ofFloat(buttons, "alpha", 0, 1);
                     upscale3.setDuration(222);
                     upscale3.start();
-                    ObjectAnimator upXanim3 = ObjectAnimator.ofFloat(buttons, "TranslationX", 0, 130, 80, 115, 100);
+                    ObjectAnimator upXanim3 = ObjectAnimator.ofFloat(buttons, "TranslationX", 0, px2dp(130), px2dp(80), px2dp(115), px2dp(100));
                     upXanim3.setDuration(888);
                     upXanim3.start();
-                    ObjectAnimator upYanim3 = ObjectAnimator.ofFloat(buttons, "TranslationY", 0, -100, -60, -90, -80);
+                    ObjectAnimator upYanim3 = ObjectAnimator.ofFloat(buttons, "TranslationY", 0, px2dp(-100), px2dp(-60), px2dp(-90), px2dp(-80));
                     upYanim3.setDuration(888);
                     upYanim3.start();
                     isAnim = false;
@@ -273,7 +279,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mMapView.onPause();
     }
 
-
     @Override
     public void onClick(View v) {
 
@@ -282,22 +287,40 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //把定位点再次显现出来
                 MapStatusUpdate mapStatusUpdate = MapStatusUpdateFactory.newLatLng(latLng);
                 mBaiduMap.animateMapStatus(mapStatusUpdate);
-                Toast.makeText(MainActivity.this, str, Toast.LENGTH_SHORT).show();
+                MyToast.newToast(this, str);
                 break;
             case R.id.button:
-                //卫星地图
-                mBaiduMap.setMapType(BaiduMap.MAP_TYPE_SATELLITE);
+                if (openTraffic) {
+                    MyToast.newToast(this, "实时交通已关闭");
+                    mBaiduMap.setTrafficEnabled(false);
+                    openTraffic = false;
+                    button.setImageResource(R.drawable.ic_rglight_close);
+                } else {
+                    MyToast.newToast(this, "实时交通已打开");
+                    mBaiduMap.setTrafficEnabled(true);
+                    openTraffic = true;
+                    button.setImageResource(R.drawable.ic_rglight_open);
+                }
                 break;
             case R.id.buttons:
-                //普通地图
-                mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
-                break;
+                if (isSwitchMap == true) {
+                    //卫星地图
+                    mBaiduMap.setMapType(BaiduMap.MAP_TYPE_SATELLITE);
+                    isSwitchMap = false;
+                    buttons.setImageResource(R.drawable.ic_satellite);
+                    MyToast.newToast(this, "已切换卫星地图");
+                } else {
+                    //普通地图
+                    mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
+                    isSwitchMap = true;
+                    buttons.setImageResource(R.drawable.ic_ordinary);
+                    MyToast.newToast(this, "已切换普通地图");
+                }
         }
     }
 
 
     //防连点内部类
-
     public abstract class NoDoubleListener implements View.OnClickListener {
         public static final int MIN_CLICK_DELAY_TIME = 500;
         private static final String TAG = "NoDoubleListener";
@@ -315,5 +338,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         protected abstract void onNoDoubleClick(View v);
     }
 
+    //px转dp
+    private int px2dp(float pxValue) {
+        float scale = this.getResources().getDisplayMetrics().density;
+        return (int) (pxValue * scale + 0.5f);
+    }
+
+    public void getpermission() {
+        lm = (LocationManager) this.getSystemService(this.LOCATION_SERVICE);
+        boolean ok = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        if (ok) {//开了定位服务
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+                Intent intent = new Intent();
+                intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                Uri uri = Uri.fromParts("package", this.getPackageName(), null);
+                intent.setData(uri);
+                startActivity(intent);
+                finish();
+            } else {
+                // 有权限了
+//                        Toast.makeText(getActivity(), "有权限", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            MyToast.newToast(this, "系统检测到未开启GPS定位服务");
+            Intent intent = new Intent();
+            intent.setAction(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivityForResult(intent, 1315);
+        }
+    }
 
 }

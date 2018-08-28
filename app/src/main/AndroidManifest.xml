@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.administrator.baidumap_testdemo_a">
 
     <!--给予相应权限-->
@@ -36,6 +37,17 @@
     <!--访问网络-->
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"
+        tools:ignore="ProtectedPermissions" />
+
+    <uses-permission android:name="android.permission.READ_LOGS"
+        tools:ignore="ProtectedPermissions" />
+
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <uses-permission android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+
     <!--//////////////////////////////////////////////////////////////-->
 
     <application
@@ -47,7 +59,7 @@
         android:theme="@style/AppTheme">
 
         <!--添加KEY-->
-        <meta-data android:name="com.baidu.lbsapi.API_KEY" android:value="uT4IVjIdaimRlQRdOsyllqGEcyCAlQSY"/>
+        <meta-data android:name="com.baidu.lbsapi.API_KEY" android:value="6GRGWzFOcuS67B4HuRG8XPv7yUSEnFMO"/>
 
         <activity android:name=".MainActivity">
             <intent-filter>

@@ -11,7 +11,7 @@
         android:layout_height="match_parent"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:clickable="true"></com.baidu.mapapi.map.MapView>
+        android:clickable="true" />
 
     <ImageButton
         android:id="@+id/bt"
@@ -31,7 +31,7 @@
         android:layout_alignTop="@+id/bt"
         android:layout_centerHorizontal="true"
         android:background="@drawable/white_reset"
-        android:src="@drawable/ic_satellite" />
+        android:src="@drawable/ic_rglight_close" />
 
     <ImageButton
         android:id="@+id/buttons"
