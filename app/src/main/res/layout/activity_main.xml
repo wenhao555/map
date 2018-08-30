@@ -11,12 +11,103 @@
         android:layout_height="match_parent"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:clickable="true" />
+        android:clickable="true">
+        <LinearLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_alignWithParentIfMissing="false"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="10dip"
+            android:orientation="vertical" >
+            <Button
+                android:id="@+id/customicon"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_marginTop="10dip"
+                android:layout_weight="1.0"
+                android:onClick="changeRouteIcon"
+                android:text="自定义起终点图标" />
+        </LinearLayout>
+    </com.baidu.mapapi.map.MapView>
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:gravity="center_vertical"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/tv_start"
+                android:textSize="18dp"
+                android:text="起点："
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <EditText
+                android:id="@+id/start"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:gravity="center_vertical"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/tv_end"
+                android:textSize="18dp"
+                android:text="终点："
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <EditText
+                android:id="@+id/end"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="郑州金水区学府广场"/>
+        </LinearLayout>
+        <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+            <Button
+                android:id="@+id/drive"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_marginLeft="2dip"
+                android:layout_marginRight="2dip"
+                android:layout_weight="1.0"
+                android:onClick="SearchButtonProcess"
+                android:text="驾车搜索" />
+            <Button
+                android:id="@+id/transit"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_marginLeft="2dip"
+                android:layout_marginRight="2dip"
+                android:layout_weight="1.0"
+                android:onClick="SearchButtonProcess"
+                android:text="公交搜索" />
+            <Button
+                android:id="@+id/walk"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_marginLeft="2dip"
+                android:layout_marginRight="2dip"
+                android:layout_weight="1.0"
+                android:onClick="SearchButtonProcess"
+                android:text="步行搜索" />
+    </LinearLayout>
+
+    </LinearLayout>
 
     <ImageButton
         android:id="@+id/bt"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="40dp"
@@ -26,29 +117,65 @@
 
     <ImageButton
         android:id="@+id/button"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_alignTop="@+id/bt"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignTop="@id/bt"
         android:layout_centerHorizontal="true"
         android:background="@drawable/white_reset"
         android:src="@drawable/ic_rglight_close" />
 
     <ImageButton
         android:id="@+id/buttons"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_alignTop="@+id/bt"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignTop="@id/bt"
         android:layout_centerHorizontal="true"
         android:background="@drawable/white_reset"
-        android:src="@drawable/ic_ordinary" />
+        android:src="@drawable/ic_satellite" />
+    <ImageButton
+        android:id="@+id/nav"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignTop="@id/bt"
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/white_reset"
+        android:src="@drawable/ic_nav_close" />
 
     <ImageButton
+        android:id="@+id/heat"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignTop="@id/bt"
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/white_reset"
+        android:src="@drawable/ic_heat_close" />
+    <ImageButton
         android:id="@+id/ib_Eject"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_alignTop="@+id/bt"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignTop="@id/bt"
         android:layout_centerHorizontal="true"
         android:background="@drawable/white_reset"
         android:src="@drawable/ic_arrow" />
+        android:layout_marginBottom="10dip" >
+        <Button
+            android:id="@+id/pre"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="2dip"
+            android:layout_marginRight="2dip"
+            android:text="&lt;"
+            android:layout_alignParentBottom="true"
+            android:onClick="nodeClick" />
+        <Button
+            android:id="@+id/next"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="2dip"
+            android:layout_marginRight="2dip"
+            android:text="&gt;"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:onClick="nodeClick" />
 
 </RelativeLayout>
