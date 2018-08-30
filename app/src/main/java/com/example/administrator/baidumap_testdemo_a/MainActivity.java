@@ -599,8 +599,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.bt:
                 //把定位点再次显现出来
-                MapStatusUpdate mapStatusUpdate = MapStatusUpdateFactory.newLatLng(latLng);
-                mBaiduMap.animateMapStatus(mapStatusUpdate);
+
+                MapStatus.Builder builder = new MapStatus.Builder();
+                builder.target(latLng).zoom(18.0f);
+                mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
+
+
+
+
                 MyToast.newToast(this, str);
                 break;
             case R.id.button:
@@ -845,7 +851,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         routeOverlay.addToMap();
     }
 
-
+//    public static void main(String[] args) {
+//        String a="hello2";
+//        final String b="hello";
+//        String d="hello";
+//        String c=b+2;
+//        String e=d+2;
+//        System.out.println((a==c));
+//        System.out.println((a==e));
+//    }
 }
 
 
