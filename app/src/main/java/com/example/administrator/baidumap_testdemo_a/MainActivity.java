@@ -90,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button drive,transit,walk;
     private Boolean ischecknav=false;
     private TextView tv_start,tv_end;
+    private Boolean ischeckheat=false;
     // TODO: 2018/8/23 已完成———— 实施定位按钮，当按下定位按钮，地图进行重新定位————实施按钮进行卫星和普通地图之间的切换————防止连点造成动画加载异常
     // TODO: 2018/8/23 已完成——动态刷新，每过*秒进行刷新以达到实时定位效果，具体实现方式同按下按钮定位相同
 
@@ -159,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //开启交通图
 //        mBaiduMap.setTrafficEnabled(true);
         //开启热力图
-//        mBaiduMap.setBaiduHeatMapEnabled(true);
+    //    mBaiduMap.setBaiduHeatMapEnabled(true);
         // 开启定位图层
         mBaiduMap.setMyLocationEnabled(true);
         mLocationClient = new LocationClient(getApplicationContext());     //声明LocationClient类
@@ -454,6 +455,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tv_start.setVisibility(View.GONE);
         tv_end.setVisibility(View.GONE);
 
+        heat.setOnClickListener(this);
         nav.setOnClickListener(this);
         buttons.setOnClickListener(this);
         ib_Eject.setOnClickListener(new NoDoubleListener() {
@@ -654,6 +656,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     tv_end.setVisibility(View.VISIBLE);
                     nav.setImageResource(R.drawable.ic_nav_open);
                     ischecknav=true;
+                }
+                break;
+            case R.id.heat:
+                if(ischeckheat){
+                    mBaiduMap.setBaiduHeatMapEnabled(false);
+                    heat.setImageResource(R.drawable.ic_heat_close);
+                    ischeckheat=false;
+                }else {
+                    mBaiduMap.setBaiduHeatMapEnabled(true);
+                    heat.setImageResource(R.drawable.ic_heat_open);
+                    ischeckheat=true;
                 }
                 break;
         }
