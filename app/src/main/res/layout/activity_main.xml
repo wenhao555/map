@@ -3,8 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/rl"
     tools:context=".MainActivity">
-
     <com.baidu.mapapi.map.MapView
         android:id="@+id/bmapView"
         android:layout_width="match_parent"
@@ -32,6 +32,12 @@
                 android:text="自定义起终点图标" />
         </LinearLayout>
     </com.baidu.mapapi.map.MapView>
+
+    <View
+        android:id="@+id/view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#00000000" />
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
@@ -68,6 +74,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="郑州金水区学府广场"/>
+
         </LinearLayout>
         <LinearLayout
         android:orientation="horizontal"
@@ -103,6 +110,7 @@
     </LinearLayout>
 
     </LinearLayout>
+
 
     <ImageButton
         android:id="@+id/bt"

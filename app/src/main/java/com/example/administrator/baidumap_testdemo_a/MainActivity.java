@@ -10,11 +10,19 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.Layout;
+import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ZoomControls;
@@ -32,14 +40,25 @@ import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
+import com.baidu.mapapi.map.MarkerOptions;
 import com.baidu.mapapi.map.MyLocationData;
+import com.baidu.mapapi.map.OverlayOptions;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.overlayutil.DrivingRouteOverlay;
 import com.baidu.mapapi.overlayutil.OverlayManager;
+import com.baidu.mapapi.overlayutil.PoiOverlay;
 import com.baidu.mapapi.overlayutil.TransitRouteOverlay;
 import com.baidu.mapapi.overlayutil.WalkingRouteOverlay;
+import com.baidu.mapapi.search.core.CityInfo;
+import com.baidu.mapapi.search.core.PoiInfo;
 import com.baidu.mapapi.search.core.RouteLine;
 import com.baidu.mapapi.search.core.SearchResult;
+import com.baidu.mapapi.search.poi.OnGetPoiSearchResultListener;
+import com.baidu.mapapi.search.poi.PoiDetailResult;
+import com.baidu.mapapi.search.poi.PoiDetailSearchOption;
+import com.baidu.mapapi.search.poi.PoiIndoorResult;
+import com.baidu.mapapi.search.poi.PoiResult;
+import com.baidu.mapapi.search.poi.PoiSearch;
 import com.baidu.mapapi.search.route.BikingRouteResult;
 import com.baidu.mapapi.search.route.DrivingRouteLine;
 import com.baidu.mapapi.search.route.DrivingRoutePlanOption;
@@ -55,6 +74,10 @@ import com.baidu.mapapi.search.route.TransitRouteResult;
 import com.baidu.mapapi.search.route.WalkingRouteLine;
 import com.baidu.mapapi.search.route.WalkingRoutePlanOption;
 import com.baidu.mapapi.search.route.WalkingRouteResult;
+import com.baidu.mapapi.search.sug.OnGetSuggestionResultListener;
+import com.baidu.mapapi.search.sug.SuggestionResult;
+import com.baidu.mapapi.search.sug.SuggestionSearch;
+import com.baidu.mapapi.search.sug.SuggestionSearchOption;
 import com.example.administrator.baidumap_testdemo_a.MyUtil.MyToast;
 
 import java.util.Calendar;
@@ -91,6 +114,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Boolean ischecknav=false;
     private TextView tv_start,tv_end;
     private Boolean ischeckheat=false;
+    private RelativeLayout rl;
+    View view;
+
+
+
+
     // TODO: 2018/8/23 已完成———— 实施定位按钮，当按下定位按钮，地图进行重新定位————实施按钮进行卫星和普通地图之间的切换————防止连点造成动画加载异常
     // TODO: 2018/8/23 已完成——动态刷新，每过*秒进行刷新以达到实时定位效果，具体实现方式同按下按钮定位相同
 
@@ -111,7 +140,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //注意该方法要再setContentView方法之前实现
         SDKInitializer.initialize(getApplicationContext());
 
-        getpermission();
+        //getpermission();
         setContentView(R.layout.activity_main);
 
         initView();
@@ -145,7 +174,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mSearch = RoutePlanSearch.newInstance();
         mSearch.setOnGetRoutePlanResultListener(this);
 
+
+
+
+
+
+
+
+
     }
+
+
+
 
 
     private void initMap() {
@@ -427,7 +467,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         nav = findViewById(R.id.nav);
         heat = findViewById(R.id.heat);
 
-
+        rl=findViewById(R.id.rl);
 
 
         drive=findViewById(R.id.drive);
@@ -443,7 +483,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tv_start=findViewById(R.id.tv_start);
         tv_end=findViewById(R.id.tv_end);
 
-
+        view=findViewById(R.id.view);
 
         drive.setVisibility(View.GONE);
         transit.setVisibility(View.GONE);
@@ -454,6 +494,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         editEn.setVisibility(View.GONE);
         tv_start.setVisibility(View.GONE);
         tv_end.setVisibility(View.GONE);
+
+        view.setOnClickListener(this);
+
+
 
         heat.setOnClickListener(this);
         nav.setOnClickListener(this);
@@ -514,6 +558,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     upYanim5.setDuration(800);
                     upYanim5.start();
                     isAnim = false;
+                    view.setVisibility(View.VISIBLE);
                 } else {
                     ObjectAnimator anim = ObjectAnimator.ofFloat(ib_Eject, "Rotation", 135, 290, 250, 270);
                     anim.setDuration(300);
@@ -566,6 +611,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     upYanim5.setDuration(250);
                     upYanim5.start();
                     isAnim = true;
+                    view.setVisibility(View.GONE);
                 }
             }
         });
@@ -576,6 +622,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onDestroy();
         //在activity执行onDestroy时执行mMapView.onDestroy()，实现地图生命周期管理
         mMapView.onDestroy();
+
     }
 
     @Override
@@ -673,6 +720,62 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mBaiduMap.setBaiduHeatMapEnabled(true);
                     heat.setImageResource(R.drawable.ic_heat_open);
                     ischeckheat=true;
+                }
+                break;
+            case R.id.view:
+                if(!isAnim) {
+                    ObjectAnimator anim = ObjectAnimator.ofFloat(ib_Eject, "Rotation", 135, 290, 250, 270);
+                    anim.setDuration(300);
+                    anim.start();
+                    //交通复位
+                    ObjectAnimator upscale1 = ObjectAnimator.ofFloat(button, "alpha", 1, 0);
+                    upscale1.setDuration(222);
+                    upscale1.start();
+                    ObjectAnimator upXanim1 = ObjectAnimator.ofFloat(button, "TranslationX", 0);
+                    upXanim1.setDuration(100);
+                    upXanim1.start();
+                    ObjectAnimator upYanim1 = ObjectAnimator.ofFloat(button, "TranslationY", 0);
+                    upYanim1.setDuration(100);
+                    upYanim1.start();
+                    //复位复位
+                    ObjectAnimator upscale2 = ObjectAnimator.ofFloat(bt, "alpha", 1, 0);
+                    upscale2.setDuration(222);
+                    upscale2.start();
+                    ObjectAnimator upYanim2 = ObjectAnimator.ofFloat(bt, "TranslationY", 0);
+                    upYanim2.setDuration(200);
+                    upYanim2.start();
+                    //卫星复位
+                    ObjectAnimator upscale3 = ObjectAnimator.ofFloat(buttons, "alpha", 1, 0);
+                    upscale3.setDuration(222);
+                    upscale3.start();
+                    ObjectAnimator upXanim3 = ObjectAnimator.ofFloat(buttons, "TranslationX", 0);
+                    upXanim3.setDuration(300);
+                    upXanim3.start();
+                    ObjectAnimator upYanim3 = ObjectAnimator.ofFloat(buttons, "TranslationY", 0);
+                    upYanim3.setDuration(300);
+                    upYanim3.start();
+                    //热力复位
+                    ObjectAnimator upscale4 = ObjectAnimator.ofFloat(heat, "alpha", 1, 0);
+                    upscale4.setDuration(222);
+                    upscale4.start();
+                    ObjectAnimator upXanim4 = ObjectAnimator.ofFloat(heat, "TranslationX", 0);
+                    upXanim4.setDuration(150);
+                    upXanim4.start();
+                    ObjectAnimator upYanim4 = ObjectAnimator.ofFloat(heat, "TranslationY", 0);
+                    upYanim4.setDuration(150);
+                    upYanim4.start();
+                    //导航复位
+                    ObjectAnimator upscale5 = ObjectAnimator.ofFloat(nav, "alpha", 1, 0);
+                    upscale5.setDuration(222);
+                    upscale5.start();
+                    ObjectAnimator upXanim5 = ObjectAnimator.ofFloat(nav, "TranslationX", 0);
+                    upXanim5.setDuration(250);
+                    upXanim5.start();
+                    ObjectAnimator upYanim5 = ObjectAnimator.ofFloat(nav, "TranslationY", 0);
+                    upYanim5.setDuration(250);
+                    upYanim5.start();
+                    isAnim = true;
+                    view.setVisibility(View.GONE);
                 }
                 break;
         }
