@@ -20,6 +20,7 @@ public class MyOrientationListener implements SensorEventListener{
 
     //方向传感器有三个坐标，现在只关注X
     private float mLastX;
+    //
     //构造函数
     public MyOrientationListener(Context context) {
         this.mContext = context;

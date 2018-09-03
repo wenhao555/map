@@ -8,6 +8,8 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -97,6 +99,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private float mLastX;
     private Double mLatitude, mLongitude;
     BitmapDescriptor bitmapDescriptor;
+    private LocationClientOption mLocationClientOption;
     View view;
 
 
@@ -120,46 +123,86 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //注意该方法要再setContentView方法之前实现
         SDKInitializer.initialize(getApplicationContext());
 
-        //getpermission();
-        setContentView(R.layout.activity_main);
 
-        initView();
-        initMap();
-        initMyLoc();
-        // TODO: 2018/8/23 switch 控件设置
-        //去掉百度logo
-        View child = mMapView.getChildAt(1);
-        if (child != null && (child instanceof ImageView || child instanceof ZoomControls)) {
-            child.setVisibility(View.INVISIBLE);
-            //去掉地图上比例尺
-            mMapView.showScaleControl(false);
-            // 隐藏缩放控件
-            mMapView.showZoomControls(false);
+        //4
+
+//        lm = (LocationManager) this.getSystemService(this.LOCATION_SERVICE);
+//        lm.setTestProviderEnabled(LocationManager.GPS_PROVIDER,true);
+        //
+
+//
+        if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED){//未开启定位权限
+                //开启定位权限,200是标识码
+                ActivityCompat.requestPermissions(MainActivity.this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION},200);
+                }else {
+            MyToast.newToast(MainActivity.this, "已开启定位权限");
+
+//W
+            getpermission();
+            setContentView(R.layout.activity_main);
+            initView();
+            initMap();
+            initMyLoc();
+            // TODO: 2018/8/23 switch 控件设置
+            //去掉百度logo
+            View child = mMapView.getChildAt(1);
+            if (child != null && (child instanceof ImageView || child instanceof ZoomControls)) {
+                child.setVisibility(View.INVISIBLE);
+                //去掉地图上比例尺
+                mMapView.showScaleControl(false);
+                // 隐藏缩放控件
+                mMapView.showZoomControls(false);
+
+            }
+            //设定中心点坐标
+            LatLng cenpt = new LatLng(37.52, 121.39);
+
+
+
+
+
+                //定义地图状态
+                MapStatus mMapStatus = new MapStatus.Builder()
+                        .target(cenpt)
+                        .build();
+                //定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
+                MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory.newMapStatus(mMapStatus);
+                //改变地图状态
+
+                mBaiduMap.setMapStatus(mMapStatusUpdate);
+                mBtnPre.setVisibility(View.INVISIBLE);
+                mBtnNext.setVisibility(View.INVISIBLE);
+                //地图点击事件处理
+                mBaiduMap.setOnMapClickListener(this);
+                // 初始化搜索模块，注册事件监听
+                initLocationClient();
+                mSearch = RoutePlanSearch.newInstance();
+                mSearch.setOnGetRoutePlanResultListener(this);
+
 
         }
-        //设定中心点坐标
-        LatLng cenpt = new LatLng(37.52, 121.39);
+    }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode){
+            case 200://刚才的识别码
+                if(grantResults[0] == PackageManager.PERMISSION_GRANTED){//用户同意权限,执行我们的操作
+                    ActivityCompat.requestPermissions(MainActivity.this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION},200);
+                }else{//用户拒绝之后,当然我们也可以弹出一个窗口,直接跳转到系统设置页面
+                    MyToast.newToast(MainActivity.this,"未开启定位权限,请手动设置开启权限");
+                    getpermission();
+                }
+                break;
+            default:break;
 
-        //定义地图状态
-        MapStatus mMapStatus = new MapStatus.Builder()
-                .target(cenpt)
-                .build();
-        //定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
-        MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory.newMapStatus(mMapStatus);
-        //改变地图状态
-        mBaiduMap.setMapStatus(mMapStatusUpdate);
-        mBtnPre.setVisibility(View.INVISIBLE);
-        mBtnNext.setVisibility(View.INVISIBLE);
-        //地图点击事件处理
-        mBaiduMap.setOnMapClickListener(this);
-        // 初始化搜索模块，注册事件监听
-        mSearch = RoutePlanSearch.newInstance();
-        mSearch.setOnGetRoutePlanResultListener(this);
+        }
+
 
 
     }
-
 
     private void initMap() {
         //获取地图控件引用
@@ -183,7 +226,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //开启定位
         mLocationClient.start();
         //图片点击事件，回到定位点
+
         mLocationClient.requestLocation();
+
+        //五秒监听一次
+        mLocationClientOption = new LocationClientOption();
+        initLocationClient();
+        mLocationClientOption.setScanSpan(5000);
+        mLocationClient.setLocOption(mLocationClientOption);
+    }
+
+
+    //监听后改变位置，实时
+    private void initLocationClient() {
+            mLocationClientOption.setOpenGps(true);
+            mLocationClientOption.setLocationMode(com.baidu.location.LocationClientOption.LocationMode.Hight_Accuracy);
+            mLocationClientOption.setCoorType("bd09ll");
+            mLocationClientOption.setScanSpan(5000);
+            mLocationClientOption.setIsNeedAddress(true);
+            mLocationClientOption.setNeedDeviceDirect(true);
+      
     }
 
     //配置定位SDK参数
@@ -416,25 +478,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 if (location.getLocType() == BDLocation.TypeGpsLocation) {
                     // GPS定位结果
-                    Toast.makeText(MainActivity.this, location.getAddrStr(), Toast.LENGTH_SHORT).show();
+                    MyToast.newToast(MainActivity.this, location.getAddrStr());
                     editSt.setText(str);
                 } else if (location.getLocType() == BDLocation.TypeNetWorkLocation) {
                     // 网络定位结果
-                    Toast.makeText(MainActivity.this, location.getAddrStr(), Toast.LENGTH_SHORT).show();
+                    MyToast.newToast(MainActivity.this, location.getAddrStr());
                     str = location.getAddrStr();
                     editSt.setText(str);
 
                 } else if (location.getLocType() == BDLocation.TypeOffLineLocation) {
                     // 离线定位结果
-                    Toast.makeText(MainActivity.this, location.getAddrStr(), Toast.LENGTH_SHORT).show();
+                    MyToast.newToast(MainActivity.this, location.getAddrStr());
                     editSt.setText(str);
 
                 } else if (location.getLocType() == BDLocation.TypeServerError) {
-                    Toast.makeText(MainActivity.this, "服务器错误，请检查", Toast.LENGTH_SHORT).show();
+                    MyToast.newToast(MainActivity.this, "服务器错误，请检查");
                 } else if (location.getLocType() == BDLocation.TypeNetWorkException) {
-                    Toast.makeText(MainActivity.this, "网络错误，请检查", Toast.LENGTH_SHORT).show();
+                    MyToast.newToast(MainActivity.this, "网络错误，请检查");
                 } else if (location.getLocType() == BDLocation.TypeCriteriaException) {
-                    Toast.makeText(MainActivity.this, "手机模式错误，请检查是否飞行", Toast.LENGTH_SHORT).show();
+                    MyToast.newToast(MainActivity.this, "手机模式错误，请检查是否飞行");
                 }
             }
 
@@ -640,6 +702,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
+    // TODO: 2018/9/3  点击事件跳转链接
+    
     @Override
     public void onClick(View v) {
 
@@ -647,12 +711,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.bt:
                 //把定位点再次显现出来
 
+                ObjectAnimator btanim = ObjectAnimator.ofFloat(bt, "Rotation", 0, 90, 180, 270,380,340,360);
+                btanim.setDuration(1000);
+                btanim.start();
+                MyToast.newToast(MainActivity.this,"已重新获取定位点");
                 MapStatus.Builder builder = new MapStatus.Builder();
                 builder.target(latLng).zoom(18.0f);
                 mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
-
-
-                MyToast.newToast(this, str);
                 break;
             case R.id.button:
                 if (openTraffic) {
@@ -713,10 +778,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (ischeckheat) {
                     mBaiduMap.setBaiduHeatMapEnabled(false);
                     heat.setImageResource(R.drawable.ic_heat_close);
+                    MyToast.newToast(MainActivity.this,"实时热力图已关闭");
                     ischeckheat = false;
                 } else {
                     mBaiduMap.setBaiduHeatMapEnabled(true);
                     heat.setImageResource(R.drawable.ic_heat_open);
+                    MyToast.newToast(MainActivity.this,"实时热力图已打开");
                     ischeckheat = true;
                 }
                 break;
