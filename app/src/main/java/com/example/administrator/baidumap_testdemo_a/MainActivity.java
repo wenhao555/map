@@ -10,14 +10,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Editable;
-import android.text.Layout;
-import android.text.TextWatcher;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -40,25 +33,15 @@ import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
-import com.baidu.mapapi.map.MarkerOptions;
+import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationData;
-import com.baidu.mapapi.map.OverlayOptions;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.overlayutil.DrivingRouteOverlay;
 import com.baidu.mapapi.overlayutil.OverlayManager;
-import com.baidu.mapapi.overlayutil.PoiOverlay;
 import com.baidu.mapapi.overlayutil.TransitRouteOverlay;
 import com.baidu.mapapi.overlayutil.WalkingRouteOverlay;
-import com.baidu.mapapi.search.core.CityInfo;
-import com.baidu.mapapi.search.core.PoiInfo;
 import com.baidu.mapapi.search.core.RouteLine;
 import com.baidu.mapapi.search.core.SearchResult;
-import com.baidu.mapapi.search.poi.OnGetPoiSearchResultListener;
-import com.baidu.mapapi.search.poi.PoiDetailResult;
-import com.baidu.mapapi.search.poi.PoiDetailSearchOption;
-import com.baidu.mapapi.search.poi.PoiIndoorResult;
-import com.baidu.mapapi.search.poi.PoiResult;
-import com.baidu.mapapi.search.poi.PoiSearch;
 import com.baidu.mapapi.search.route.BikingRouteResult;
 import com.baidu.mapapi.search.route.DrivingRouteLine;
 import com.baidu.mapapi.search.route.DrivingRoutePlanOption;
@@ -74,10 +57,6 @@ import com.baidu.mapapi.search.route.TransitRouteResult;
 import com.baidu.mapapi.search.route.WalkingRouteLine;
 import com.baidu.mapapi.search.route.WalkingRoutePlanOption;
 import com.baidu.mapapi.search.route.WalkingRouteResult;
-import com.baidu.mapapi.search.sug.OnGetSuggestionResultListener;
-import com.baidu.mapapi.search.sug.SuggestionResult;
-import com.baidu.mapapi.search.sug.SuggestionSearch;
-import com.baidu.mapapi.search.sug.SuggestionSearchOption;
 import com.example.administrator.baidumap_testdemo_a.MyUtil.MyToast;
 
 import java.util.Calendar;
@@ -109,15 +88,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView popupText = null;
     private ImageButton nav;//开启导航
     private ImageButton heat;//开启热力图
-    private EditText editSt,editEn;
-    private Button drive,transit,walk;
-    private Boolean ischecknav=false;
-    private TextView tv_start,tv_end;
-    private Boolean ischeckheat=false;
+    private EditText editSt, editEn;
+    private Button drive, transit, walk;
+    private Boolean ischecknav = false;
+    private TextView tv_start, tv_end;
+    private Boolean ischeckheat = false;
     private RelativeLayout rl;
+    private float mLastX;
+    private Double mLatitude, mLongitude;
+    BitmapDescriptor bitmapDescriptor;
     View view;
-
-
 
 
     // TODO: 2018/8/23 已完成———— 实施定位按钮，当按下定位按钮，地图进行重新定位————实施按钮进行卫星和普通地图之间的切换————防止连点造成动画加载异常
@@ -145,6 +125,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         initView();
         initMap();
+        initMyLoc();
         // TODO: 2018/8/23 switch 控件设置
         //去掉百度logo
         View child = mMapView.getChildAt(1);
@@ -158,6 +139,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         //设定中心点坐标
         LatLng cenpt = new LatLng(37.52, 121.39);
+
+
         //定义地图状态
         MapStatus mMapStatus = new MapStatus.Builder()
                 .target(cenpt)
@@ -175,17 +158,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mSearch.setOnGetRoutePlanResultListener(this);
 
 
-
-
-
-
-
-
-
     }
-
-
-
 
 
     private void initMap() {
@@ -200,7 +173,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //开启交通图
 //        mBaiduMap.setTrafficEnabled(true);
         //开启热力图
-    //    mBaiduMap.setBaiduHeatMapEnabled(true);
+        //    mBaiduMap.setBaiduHeatMapEnabled(true);
         // 开启定位图层
         mBaiduMap.setMyLocationEnabled(true);
         mLocationClient = new LocationClient(getApplicationContext());     //声明LocationClient类
@@ -411,7 +384,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         @Override
         public void onReceiveLocation(BDLocation location) {
-            latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            //将获取的location信息给百度map
+            MyLocationData data = new MyLocationData.Builder()
+                    .accuracy(location.getRadius())
+                    // 此处设置开发者获取到的方向信息，顺时针0-360，mLastX就是获取到的方向传感器传来的x轴数值
+                    .direction(mLastX)
+                    .latitude(location.getLatitude())
+                    .longitude(location.getLongitude())
+                    .build();
+            mBaiduMap.setMyLocationData(data);
+            mLatitude = location.getLatitude();
+            mLongitude = location.getLongitude();
+            latLng = new LatLng(mLatitude, mLongitude);
             // 构造定位数据
             MyLocationData locData = new MyLocationData.Builder()
                     .accuracy(location.getRadius())
@@ -453,10 +437,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Toast.makeText(MainActivity.this, "手机模式错误，请检查是否飞行", Toast.LENGTH_SHORT).show();
                 }
             }
+
+            //
+
+            //配置定位图层显示方式，使用自己的定位图标
+            //
+            //初始化图标
+            bitmapDescriptor = BitmapDescriptorFactory.fromResource(R.drawable.ic_compass);
+
+            //
+            MyLocationConfiguration configuration = new MyLocationConfiguration(MyLocationConfiguration.LocationMode.NORMAL, true, bitmapDescriptor);
+            mBaiduMap.setMyLocationConfigeration(configuration);
+
+            //
+
+
         }
     }
 
     private void initView() {
+
+
         mMapView = findViewById(R.id.bmapView);
         bt = findViewById(R.id.bt);
         bt.setOnClickListener(this);
@@ -467,23 +468,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         nav = findViewById(R.id.nav);
         heat = findViewById(R.id.heat);
 
-        rl=findViewById(R.id.rl);
+        rl = findViewById(R.id.rl);
 
 
-        drive=findViewById(R.id.drive);
-        transit=findViewById(R.id.transit);
-        walk=findViewById(R.id.walk);
+        drive = findViewById(R.id.drive);
+        transit = findViewById(R.id.transit);
+        walk = findViewById(R.id.walk);
 
-        mBtnPre =  findViewById(R.id.pre);
+        mBtnPre = findViewById(R.id.pre);
         mBtnNext = findViewById(R.id.next);
         // 处理搜索按钮响应
         editSt = findViewById(R.id.start);
         editEn = findViewById(R.id.end);
 
-        tv_start=findViewById(R.id.tv_start);
-        tv_end=findViewById(R.id.tv_end);
+        tv_start = findViewById(R.id.tv_start);
+        tv_end = findViewById(R.id.tv_end);
 
-        view=findViewById(R.id.view);
+        view = findViewById(R.id.view);
 
         drive.setVisibility(View.GONE);
         transit.setVisibility(View.GONE);
@@ -496,7 +497,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tv_end.setVisibility(View.GONE);
 
         view.setOnClickListener(this);
-
 
 
         heat.setOnClickListener(this);
@@ -652,8 +652,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
 
 
-
-
                 MyToast.newToast(this, str);
                 break;
             case R.id.button:
@@ -685,7 +683,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.nav:
-                if(ischecknav){
+                if (ischecknav) {
                     drive.setVisibility(View.GONE);
                     transit.setVisibility(View.GONE);
                     walk.setVisibility(View.GONE);
@@ -696,8 +694,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     tv_start.setVisibility(View.GONE);
                     tv_end.setVisibility(View.GONE);
                     nav.setImageResource(R.drawable.ic_nav_close);
-                    ischecknav=false;
-                }else{
+                    ischecknav = false;
+                } else {
                     drive.setVisibility(View.VISIBLE);
                     transit.setVisibility(View.VISIBLE);
                     walk.setVisibility(View.VISIBLE);
@@ -708,22 +706,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     tv_start.setVisibility(View.VISIBLE);
                     tv_end.setVisibility(View.VISIBLE);
                     nav.setImageResource(R.drawable.ic_nav_open);
-                    ischecknav=true;
+                    ischecknav = true;
                 }
                 break;
             case R.id.heat:
-                if(ischeckheat){
+                if (ischeckheat) {
                     mBaiduMap.setBaiduHeatMapEnabled(false);
                     heat.setImageResource(R.drawable.ic_heat_close);
-                    ischeckheat=false;
-                }else {
+                    ischeckheat = false;
+                } else {
                     mBaiduMap.setBaiduHeatMapEnabled(true);
                     heat.setImageResource(R.drawable.ic_heat_open);
-                    ischeckheat=true;
+                    ischeckheat = true;
                 }
                 break;
             case R.id.view:
-                if(!isAnim) {
+                if (!isAnim) {
                     ObjectAnimator anim = ObjectAnimator.ofFloat(ib_Eject, "Rotation", 135, 290, 250, 270);
                     anim.setDuration(300);
                     anim.start();
@@ -841,7 +839,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-
     /**
      * 发起路线规划搜索示例
      *
@@ -954,15 +951,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         routeOverlay.addToMap();
     }
 
-//    public static void main(String[] args) {
-//        String a="hello2";
-//        final String b="hello";
-//        String d="hello";
-//        String c=b+2;
-//        String e=d+2;
-//        System.out.println((a==c));
-//        System.out.println((a==e));
-//    }
+
+    private void initMyLoc() {
+        //初始化图标
+        bitmapDescriptor = BitmapDescriptorFactory.fromResource(R.drawable.ic_compass);
+        //方向传感器监听
+        MyOrientationListener myOrientationListener = new MyOrientationListener(this);
+        myOrientationListener.setOnOrientationListener(new MyOrientationListener.OnOrientationListener() {
+            @Override
+            public void onOrientationChanged(float x) {
+                //将获取的x轴方向赋值给全局变量
+
+                mLastX = x;
+            }
+        });
+    }
+
+
 }
 
 
