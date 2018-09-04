@@ -42,7 +42,11 @@
         android:visibility="gone" />
 
     <LinearLayout
+        android:id="@+id/ll_st_en"
         android:layout_width="match_parent"
+        android:layout_marginTop="3dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
         android:layout_height="wrap_content"
         android:background="@drawable/top_oval"
         android:orientation="vertical">
@@ -51,14 +55,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:padding="10dp">
 
             <TextView
                 android:id="@+id/tv_start"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="起点："
                 android:layout_marginLeft="10dp"
+                android:text="起点："
                 android:textSize="18dp" />
 
             <EditText
@@ -71,14 +76,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:padding="10dp">
 
             <TextView
                 android:id="@+id/tv_end"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="终点："
                 android:layout_marginLeft="10dp"
+                android:text="终点："
                 android:textSize="18dp" />
 
             <EditText
@@ -91,39 +97,43 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/ll_nav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="90dp"
+        android:layout_below="@+id/ll_st_en"
+        android:layout_marginTop="5dp"
+        android:gravity="center"
         android:orientation="horizontal">
 
-        <Button
+        <ImageButton
             android:id="@+id/drive"
             android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_marginLeft="2dip"
-            android:layout_marginRight="2dip"
+            android:layout_height="50dp"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/ic_dh_oval"
             android:onClick="SearchButtonProcess"
-            android:text="驾车搜索" />
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_car" />
 
-        <Button
+        <ImageButton
             android:id="@+id/transit"
             android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_marginLeft="2dip"
-            android:layout_marginRight="2dip"
+            android:layout_height="50dp"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/ic_dh_oval"
             android:onClick="SearchButtonProcess"
-            android:text="公交搜索" />
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_bus" />
 
-        <Button
+        <ImageButton
             android:id="@+id/walk"
             android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_marginLeft="2dip"
-            android:layout_marginRight="2dip"
+            android:layout_height="50dp"
+            android:background="@drawable/ic_dh_oval"
             android:onClick="SearchButtonProcess"
-            android:text="步行搜索" />
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_walk" />
     </LinearLayout>
 
     <ImageButton
@@ -179,29 +189,9 @@
         android:layout_height="48dp"
         android:layout_alignTop="@id/bt"
         android:layout_centerHorizontal="true"
+        android:layout_marginBottom="10dip"
         android:background="@drawable/white_reset"
-        android:src="@drawable/ic_arrow"
-        android:layout_marginBottom="10dip"/>
+        android:src="@drawable/ic_arrow" />
 
-    <Button
-        android:id="@+id/pre"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginLeft="2dip"
-        android:layout_marginRight="2dip"
-        android:onClick="nodeClick"
-        android:text="&lt;" />
-
-    <Button
-        android:id="@+id/next"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_marginLeft="2dip"
-        android:layout_marginRight="2dip"
-        android:onClick="nodeClick"
-        android:text="&gt;" />
 
 </RelativeLayout>

@@ -69,7 +69,7 @@
         <!--添加KEY-->
         <meta-data
             android:name="com.baidu.lbsapi.API_KEY"
-            android:value="6GRGWzFOcuS67B4HuRG8XPv7yUSEnFMO" />
+            android:value="uT4IVjIdaimRlQRdOsyllqGEcyCAlQSY" />
 
         <activity android:name=".MainActivity">
             <intent-filter>

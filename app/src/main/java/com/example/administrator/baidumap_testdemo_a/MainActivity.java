@@ -4,6 +4,7 @@ import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,6 +18,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -83,15 +85,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //浏览路线节点相关
     int nodeIndex = -1;//节点索引,供浏览节点时使用
     RouteLine route = null;
-    Button mBtnPre = null;//上一个节点
-    Button mBtnNext = null;//下一个节点
     OverlayManager routeOverlay = null;
     boolean useDefaultIcon = false;
     private TextView popupText = null;
     private ImageButton nav;//开启导航
     private ImageButton heat;//开启热力图
     private EditText editSt, editEn;
-    private Button drive, transit, walk;
+    private ImageButton drive, transit, walk;
     private Boolean ischecknav = false;
     private TextView tv_start, tv_end;
     private Boolean ischeckheat = false;
@@ -100,6 +100,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Double mLatitude, mLongitude;
     BitmapDescriptor bitmapDescriptor;
     private LocationClientOption mLocationClientOption;
+    private LinearLayout ll_st_en;
+    private LinearLayout ll_nav;
+
     View view;
 
 
@@ -171,8 +174,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //改变地图状态
 
                 mBaiduMap.setMapStatus(mMapStatusUpdate);
-                mBtnPre.setVisibility(View.INVISIBLE);
-                mBtnNext.setVisibility(View.INVISIBLE);
                 //地图点击事件处理
                 mBaiduMap.setOnMapClickListener(this);
                 // 初始化搜索模块，注册事件监听
@@ -294,8 +295,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         if (result.error == SearchResult.ERRORNO.NO_ERROR) {
             nodeIndex = -1;
-            mBtnPre.setVisibility(View.VISIBLE);
-            mBtnNext.setVisibility(View.VISIBLE);
             route = result.getRouteLines().get(0);
             WalkingRouteOverlay overlay = new MyWalkingRouteOverlay(mBaiduMap);
             mBaiduMap.setOnMarkerClickListener(overlay);
@@ -318,8 +317,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         if (result.error == SearchResult.ERRORNO.NO_ERROR) {
             nodeIndex = -1;
-            mBtnPre.setVisibility(View.VISIBLE);
-            mBtnNext.setVisibility(View.VISIBLE);
             route = result.getRouteLines().get(0);
             TransitRouteOverlay overlay = new MyTransitRouteOverlay(mBaiduMap);
             mBaiduMap.setOnMarkerClickListener(overlay);
@@ -348,8 +345,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         if (result.error == SearchResult.ERRORNO.NO_ERROR) {
             nodeIndex = -1;
-            mBtnPre.setVisibility(View.VISIBLE);
-            mBtnNext.setVisibility(View.VISIBLE);
             route = result.getRouteLines().get(0);
             DrivingRouteOverlay overlay = new MyDrivingRouteOverlay(mBaiduMap);
             routeOverlay = overlay;
@@ -529,7 +524,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ib_Eject = findViewById(R.id.ib_Eject);
         nav = findViewById(R.id.nav);
         heat = findViewById(R.id.heat);
-
+        ll_st_en=findViewById(R.id.ll_st_en);
+        ll_nav=findViewById(R.id.ll_nav);
         rl = findViewById(R.id.rl);
 
 
@@ -537,8 +533,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         transit = findViewById(R.id.transit);
         walk = findViewById(R.id.walk);
 
-        mBtnPre = findViewById(R.id.pre);
-        mBtnNext = findViewById(R.id.next);
         // 处理搜索按钮响应
         editSt = findViewById(R.id.start);
         editEn = findViewById(R.id.end);
@@ -548,11 +542,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         view = findViewById(R.id.view);
 
+        ll_st_en.setVisibility(View.GONE);
         drive.setVisibility(View.GONE);
         transit.setVisibility(View.GONE);
         walk.setVisibility(View.GONE);
-        mBtnPre.setVisibility(View.GONE);
-        mBtnNext.setVisibility(View.GONE);
         editSt.setVisibility(View.GONE);
         editEn.setVisibility(View.GONE);
         tv_start.setVisibility(View.GONE);
@@ -749,27 +742,51 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.nav:
                 if (ischecknav) {
-                    drive.setVisibility(View.GONE);
-                    transit.setVisibility(View.GONE);
-                    walk.setVisibility(View.GONE);
-                    mBtnPre.setVisibility(View.GONE);
-                    mBtnNext.setVisibility(View.GONE);
-                    editSt.setVisibility(View.GONE);
-                    editEn.setVisibility(View.GONE);
-                    tv_start.setVisibility(View.GONE);
-                    tv_end.setVisibility(View.GONE);
+                    mBaiduMap.clear();
+                    ObjectAnimator ll_se_anim=ObjectAnimator.ofFloat(ll_st_en,"TranslationY",0,-380);
+                    ll_se_anim.setDuration(500);
+                    ll_se_anim.start();
+                    ObjectAnimator drive_anim=ObjectAnimator.ofFloat(drive,"TranslationY",0,-350);
+                    drive_anim.setDuration(500);
+                    drive_anim.start();
+                    ObjectAnimator transit_anim=ObjectAnimator.ofFloat(transit,"TranslationY",0,-350);
+                    transit_anim.setDuration(400);
+                    transit_anim.start();
+                    ObjectAnimator walk_anim=ObjectAnimator.ofFloat(walk,"TranslationY",-0,-350);
+                    walk_anim.setDuration(300);
+                    walk_anim.start();
+//                    drive.setVisibility(View.GONE);
+//                    ll_st_en.setVisibility(View.GONE);
+//                    transit.setVisibility(View.GONE);
+//                    walk.setVisibility(View.GONE);
+//                    editSt.setVisibility(View.GONE);
+//                    editEn.setVisibility(View.GONE);
+//                    tv_start.setVisibility(View.GONE);
+//                    tv_end.setVisibility(View.GONE);
                     nav.setImageResource(R.drawable.ic_nav_close);
                     ischecknav = false;
                 } else {
+                    mBaiduMap.clear();
                     drive.setVisibility(View.VISIBLE);
+                    ll_st_en.setVisibility(View.VISIBLE);
                     transit.setVisibility(View.VISIBLE);
                     walk.setVisibility(View.VISIBLE);
-                    mBtnPre.setVisibility(View.VISIBLE);
-                    mBtnNext.setVisibility(View.VISIBLE);
                     editSt.setVisibility(View.VISIBLE);
                     editEn.setVisibility(View.VISIBLE);
                     tv_start.setVisibility(View.VISIBLE);
                     tv_end.setVisibility(View.VISIBLE);
+                    ObjectAnimator ll_se_anim=ObjectAnimator.ofFloat(ll_st_en,"TranslationY",-350,0);
+                    ll_se_anim.setDuration(500);
+                    ll_se_anim.start();
+                    ObjectAnimator drive_anim=ObjectAnimator.ofFloat(drive,"TranslationY",-350,0);
+                    drive_anim.setDuration(300);
+                    drive_anim.start();
+                    ObjectAnimator transit_anim=ObjectAnimator.ofFloat(transit,"TranslationY",-350,0);
+                    transit_anim.setDuration(400);
+                    transit_anim.start();
+                    ObjectAnimator walk_anim=ObjectAnimator.ofFloat(walk,"TranslationY",-350,0);
+                    walk_anim.setDuration(500);
+                    walk_anim.start();
                     nav.setImageResource(R.drawable.ic_nav_open);
                     ischecknav = true;
                 }
@@ -899,7 +916,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                        Toast.makeText(getActivity(), "有权限", Toast.LENGTH_SHORT).show();
             }
         } else {
-            Toast.makeText(this, "系统检测到未开启GPS定位服务", Toast.LENGTH_SHORT).show();
+            MyToast.newToast(this, "系统检测到未开启GPS定位服务");
             Intent intent = new Intent();
             intent.setAction(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             startActivityForResult(intent, 1315);
@@ -914,83 +931,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void SearchButtonProcess(View v) {
         //重置浏览节点的路线数据
         route = null;
-        mBtnPre.setVisibility(View.INVISIBLE);
-        mBtnNext.setVisibility(View.INVISIBLE);
         mBaiduMap.clear();
         //设置起终点信息，对于tranist search 来说，城市名无意义
         PlanNode stNode = PlanNode.withCityNameAndPlaceName("烟台", editSt.getText().toString());
         PlanNode enNode = PlanNode.withCityNameAndPlaceName("烟台", editEn.getText().toString());
 
         // 实际使用中请对起点终点城市进行正确的设定
-        if (v.getId() == R.id.drive) {
+        if (v == drive) {
             mSearch.drivingSearch((new DrivingRoutePlanOption())
                     .from(stNode)
                     .to(enNode));
-        } else if (v.getId() == R.id.transit) {
+            drive.setImageResource(R.drawable.ic_car_white);
+            drive.setBackgroundResource(R.drawable.ic_dh_oval_blue);
+            transit.setImageResource(R.drawable.ic_bus);
+            transit.setBackgroundResource(R.drawable.ic_dh_oval);
+            walk.setImageResource(R.drawable.ic_walk);
+            walk.setBackgroundResource(R.drawable.ic_dh_oval);
+        } else if (v == transit) {
             mSearch.transitSearch((new TransitRoutePlanOption())
                     .from(stNode)
                     .city("烟台")
                     .to(enNode));
-        } else if (v.getId() == R.id.walk) {
+            drive.setImageResource(R.drawable.ic_car);
+            drive.setBackgroundResource(R.drawable.ic_dh_oval);
+            transit.setImageResource(R.drawable.ic_bus_white);
+            transit.setBackgroundResource(R.drawable.ic_dh_oval_blue);
+            walk.setImageResource(R.drawable.ic_walk);
+            walk.setBackgroundResource(R.drawable.ic_dh_oval);
+        } else if (v == walk) {
             mSearch.walkingSearch((new WalkingRoutePlanOption())
                     .from(stNode)
                     .to(enNode));
+            drive.setImageResource(R.drawable.ic_car);
+            drive.setBackgroundResource(R.drawable.ic_dh_oval);
+            transit.setImageResource(R.drawable.ic_bus);
+            transit.setBackgroundResource(R.drawable.ic_dh_oval);
+            walk.setImageResource(R.drawable.ic_walk_white);
+            walk.setBackgroundResource(R.drawable.ic_dh_oval_blue);
         }
     }
 
-    /**
-     * 节点浏览示例
-     *
-     * @param v
-     */
-    public void nodeClick(View v) {
-        if (route == null ||
-                route.getAllStep() == null) {
-            return;
-        }
-        if (nodeIndex == -1 && v.getId() == R.id.pre) {
-            return;
-        }
-        //设置节点索引
-        if (v.getId() == R.id.next) {
-            if (nodeIndex < route.getAllStep().size() - 1) {
-                nodeIndex++;
-            } else {
-                return;
-            }
-        } else if (v.getId() == R.id.pre) {
-            if (nodeIndex > 0) {
-                nodeIndex--;
-            } else {
-                return;
-            }
-        }
-        //获取节结果信息
-        LatLng nodeLocation = null;
-        String nodeTitle = null;
-        Object step = route.getAllStep().get(nodeIndex);
-        if (step instanceof DrivingRouteLine.DrivingStep) {
-            nodeLocation = ((DrivingRouteLine.DrivingStep) step).getEntrance().getLocation();
-            nodeTitle = ((DrivingRouteLine.DrivingStep) step).getInstructions();
-        } else if (step instanceof WalkingRouteLine.WalkingStep) {
-            nodeLocation = ((WalkingRouteLine.WalkingStep) step).getEntrance().getLocation();
-            nodeTitle = ((WalkingRouteLine.WalkingStep) step).getInstructions();
-        } else if (step instanceof TransitRouteLine.TransitStep) {
-            nodeLocation = ((TransitRouteLine.TransitStep) step).getEntrance().getLocation();
-            nodeTitle = ((TransitRouteLine.TransitStep) step).getInstructions();
-        }
 
-        if (nodeLocation == null || nodeTitle == null) {
-            return;
-        }
-        //移动节点至中心
-        mBaiduMap.setMapStatus(MapStatusUpdateFactory.newLatLng(nodeLocation));
-        // show popup
-        popupText = new TextView(MainActivity.this);
-        popupText.setTextColor(0xFF000000);
-        popupText.setText(nodeTitle);
-
-    }
 
     /**
      * 切换路线图标，刷新地图使其生效
@@ -1002,15 +983,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         if (useDefaultIcon) {
             ((Button) v).setText("自定义起终点图标");
-            Toast.makeText(this,
-                    "将使用系统起终点图标",
-                    Toast.LENGTH_SHORT).show();
+            MyToast.newToast(this,
+                    "将使用系统起终点图标");
 
         } else {
             ((Button) v).setText("系统起终点图标");
-            Toast.makeText(this,
-                    "将使用自定义起终点图标",
-                    Toast.LENGTH_SHORT).show();
+            MyToast.newToast(this,
+                    "将使用自定义起终点图标");
 
         }
         useDefaultIcon = !useDefaultIcon;
