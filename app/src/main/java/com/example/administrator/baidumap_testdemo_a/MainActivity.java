@@ -14,6 +14,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -61,7 +62,10 @@ import com.baidu.mapapi.search.route.TransitRouteResult;
 import com.baidu.mapapi.search.route.WalkingRouteLine;
 import com.baidu.mapapi.search.route.WalkingRoutePlanOption;
 import com.baidu.mapapi.search.route.WalkingRouteResult;
+import com.example.administrator.baidumap_testdemo_a.Mainbaohuo.ScreenBroadcastListener;
+import com.example.administrator.baidumap_testdemo_a.Mainbaohuo.ScreenManager;
 import com.example.administrator.baidumap_testdemo_a.MyUtil.MyToast;
+import com.example.administrator.baidumap_testdemo_a.view.SearchEditText;
 
 import java.util.Calendar;
 
@@ -90,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView popupText = null;
     private ImageButton nav;//开启导航
     private ImageButton heat;//开启热力图
-    private EditText editSt, editEn;
+    private SearchEditText editSt, editEn;
     private ImageButton drive, transit, walk;
     private Boolean ischecknav = false;
     private TextView tv_start, tv_end;
@@ -102,24 +106,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private LocationClientOption mLocationClientOption;
     private LinearLayout ll_st_en;
     private LinearLayout ll_nav;
+    private  MyOrientationListener myOrientationListener;
 
     View view;
 
 
-    // TODO: 2018/8/23 已完成———— 实施定位按钮，当按下定位按钮，地图进行重新定位————实施按钮进行卫星和普通地图之间的切换————防止连点造成动画加载异常
-    // TODO: 2018/8/23 已完成——动态刷新，每过*秒进行刷新以达到实时定位效果，具体实现方式同按下按钮定位相同
+    // TODO: 2018/8/23 ——实施定位按钮，当按下定位按钮，地图进行重新定位————实施按钮进行卫星和普通地图之间的切换————防止连点造成动画加载异常
+    // TODO: 2018/8/23 ——动态刷新，每过*秒进行刷新以达到实时定位效果，具体实现方式同按下按钮定位相同
+    // TODO: 2018/8/23 ——进入软件进行if语句判断是否有传感器，GPS，基站，WLAN等权限，如果没有，进行动态申请跳转
+    // TODO: 2018/8/23 ——实现按钮选择GPS，基站，WLAN进行定位
+    // TODO: 2018/8/23 ——传感器判断，实施360°方向箭头指示
+    // TODO: 2018/8/23 ——当多个应用启动时，内存发生饱和状态，对APP进行保活状态，防止APP被恶意杀死
 
-
-    // TODO: 2018/8/23 待实施——进入软件进行if语句判断是否有传感器，GPS，基站，WLAN等权限，如果没有，进行动态申请跳转
-    // TODO: 2018/8/23 待实施——实现按钮选择GPS，基站，WLAN进行定位
-    // TODO: 2018/8/23 待实施——传感器判断，实施360°方向箭头指示
-    // TODO: 2018/8/23 待实施——当多个应用启动时，内存发生饱和状态，对APP进行保活状态，防止APP被恶意杀死
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //屏幕常亮
-        //    getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        // TODO: 2018/8/23 屏幕常亮，暂未解决~
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
 
         super.onCreate(savedInstanceState);
         //在使用SDK各组件之前初始化context信息，传入ApplicationContext
@@ -143,6 +147,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 //W
             getpermission();
+        }
             setContentView(R.layout.activity_main);
             initView();
             initMap();
@@ -181,9 +186,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mSearch = RoutePlanSearch.newInstance();
                 mSearch.setOnGetRoutePlanResultListener(this);
 
+            //保活  -监听锁屏
+            final ScreenManager screenManager = ScreenManager.getInstance(MainActivity.this);
+            ScreenBroadcastListener listener = new ScreenBroadcastListener(this);
+            listener.registerListener(new ScreenBroadcastListener.ScreenStateListener() {
+                @Override
+                public void onScreenOn() {
+                    screenManager.finishActivity();
+                }
 
-        }
+                @Override
+                public void onScreenOff() {
+                    screenManager.startActivity();
+                }
+            });
+            //传感器开启
+            myOrientationListener.start();
+
     }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -191,7 +212,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (requestCode){
             case 200://刚才的识别码
                 if(grantResults[0] == PackageManager.PERMISSION_GRANTED){//用户同意权限,执行我们的操作
-                    ActivityCompat.requestPermissions(MainActivity.this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION},200);
                 }else{//用户拒绝之后,当然我们也可以弹出一个窗口,直接跳转到系统设置页面
                     MyToast.newToast(MainActivity.this,"未开启定位权限,请手动设置开启权限");
                     getpermission();
@@ -230,10 +250,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         mLocationClient.requestLocation();
 
-        //五秒监听一次
+        //一秒监听一次
         mLocationClientOption = new LocationClientOption();
         initLocationClient();
-        mLocationClientOption.setScanSpan(5000);
+        mLocationClientOption.setScanSpan(1000);
         mLocationClient.setLocOption(mLocationClientOption);
     }
 
@@ -243,7 +263,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mLocationClientOption.setOpenGps(true);
             mLocationClientOption.setLocationMode(com.baidu.location.LocationClientOption.LocationMode.Hight_Accuracy);
             mLocationClientOption.setCoorType("bd09ll");
-            mLocationClientOption.setScanSpan(5000);
+            mLocationClientOption.setScanSpan(1000);
             mLocationClientOption.setIsNeedAddress(true);
             mLocationClientOption.setNeedDeviceDirect(true);
       
@@ -457,7 +477,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             MyLocationData locData = new MyLocationData.Builder()
                     .accuracy(location.getRadius())
                     // 此处设置开发者获取到的方向信息，顺时针0-360
-                    .direction(100).latitude(location.getLatitude())
+                    .direction(mLastX).latitude(location.getLatitude())
                     .longitude(location.getLongitude()).build();
             // 设置定位数据
             mBaiduMap.setMyLocationData(locData);
@@ -474,17 +494,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (location.getLocType() == BDLocation.TypeGpsLocation) {
                     // GPS定位结果
                     MyToast.newToast(MainActivity.this, location.getAddrStr());
-                    editSt.setText(str);
                 } else if (location.getLocType() == BDLocation.TypeNetWorkLocation) {
                     // 网络定位结果
                     MyToast.newToast(MainActivity.this, location.getAddrStr());
                     str = location.getAddrStr();
-                    editSt.setText(str);
-
+                    String[] s = str.split("市");
+                    editSt.setText(s[1]);
                 } else if (location.getLocType() == BDLocation.TypeOffLineLocation) {
                     // 离线定位结果
                     MyToast.newToast(MainActivity.this, location.getAddrStr());
-                    editSt.setText(str);
 
                 } else if (location.getLocType() == BDLocation.TypeServerError) {
                     MyToast.newToast(MainActivity.this, "服务器错误，请检查");
@@ -517,7 +535,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         mMapView = findViewById(R.id.bmapView);
         bt = findViewById(R.id.bt);
-        bt.setOnClickListener(this);
         button = findViewById(R.id.button);
         button.setOnClickListener(this);
         buttons = findViewById(R.id.buttons);
@@ -555,7 +572,80 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         heat.setOnClickListener(this);
-        nav.setOnClickListener(this);
+
+        bt.setOnClickListener(new NoDoubleListener() {
+            @Override
+            protected void onNoDoubleClick(View v) {
+                //把定位点再次显现出来
+                ObjectAnimator btanim = ObjectAnimator.ofFloat(bt, "Rotation", 0, 90, 180, 270,380,340,360);
+                btanim.setDuration(1000);
+                btanim.start();
+                MyToast.newToast(MainActivity.this,"已重新获取定位点");
+                MapStatus.Builder builder = new MapStatus.Builder();
+                builder.target(latLng).zoom(18.0f);
+                mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
+            }
+        });
+        nav.setOnClickListener(new NoDoubleListener() {
+            @Override
+            protected void onNoDoubleClick(View v) {
+                if (ischecknav) {
+                    mBaiduMap.clear();
+                    ObjectAnimator ll_se_anim=ObjectAnimator.ofFloat(ll_st_en,"TranslationY",0,-380);
+                    ll_se_anim.setDuration(500);
+                    ll_se_anim.start();
+                    ObjectAnimator drive_anim=ObjectAnimator.ofFloat(drive,"TranslationY",0,-350);
+                    drive_anim.setDuration(500);
+                    drive_anim.start();
+                    ObjectAnimator transit_anim=ObjectAnimator.ofFloat(transit,"TranslationY",0,-350);
+                    transit_anim.setDuration(400);
+                    transit_anim.start();
+                    ObjectAnimator walk_anim=ObjectAnimator.ofFloat(walk,"TranslationY",-0,-350);
+                    walk_anim.setDuration(300);
+                    walk_anim.start();
+//                    drive.setVisibility(View.GONE);
+//                    ll_st_en.setVisibility(View.GONE);
+//                    transit.setVisibility(View.GONE);
+//                    walk.setVisibility(View.GONE);
+//                    editSt.setVisibility(View.GONE);
+//                    editEn.setVisibility(View.GONE);
+//                    tv_start.setVisibility(View.GONE);
+//                    tv_end.setVisibility(View.GONE);
+                    nav.setImageResource(R.drawable.ic_nav_close);
+                    ischecknav = false;
+                    drive.setImageResource(R.drawable.ic_car);
+                    drive.setBackgroundResource(R.drawable.ic_dh_oval);
+                    transit.setImageResource(R.drawable.ic_bus);
+                    transit.setBackgroundResource(R.drawable.ic_dh_oval);
+                    walk.setImageResource(R.drawable.ic_walk);
+                    walk.setBackgroundResource(R.drawable.ic_dh_oval);
+                } else {
+                    mBaiduMap.clear();
+                    drive.setVisibility(View.VISIBLE);
+                    ll_st_en.setVisibility(View.VISIBLE);
+                    transit.setVisibility(View.VISIBLE);
+                    walk.setVisibility(View.VISIBLE);
+                    editSt.setVisibility(View.VISIBLE);
+                    editEn.setVisibility(View.VISIBLE);
+                    tv_start.setVisibility(View.VISIBLE);
+                    tv_end.setVisibility(View.VISIBLE);
+                    ObjectAnimator ll_se_anim=ObjectAnimator.ofFloat(ll_st_en,"TranslationY",-350,0);
+                    ll_se_anim.setDuration(500);
+                    ll_se_anim.start();
+                    ObjectAnimator drive_anim=ObjectAnimator.ofFloat(drive,"TranslationY",-350,0);
+                    drive_anim.setDuration(300);
+                    drive_anim.start();
+                    ObjectAnimator transit_anim=ObjectAnimator.ofFloat(transit,"TranslationY",-350,0);
+                    transit_anim.setDuration(400);
+                    transit_anim.start();
+                    ObjectAnimator walk_anim=ObjectAnimator.ofFloat(walk,"TranslationY",-350,0);
+                    walk_anim.setDuration(500);
+                    walk_anim.start();
+                    nav.setImageResource(R.drawable.ic_nav_open);
+                    ischecknav = true;
+                }
+            }
+        });
         buttons.setOnClickListener(this);
         ib_Eject.setOnClickListener(new NoDoubleListener() {
             @Override
@@ -677,12 +767,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onDestroy();
         //在activity执行onDestroy时执行mMapView.onDestroy()，实现地图生命周期管理
         mMapView.onDestroy();
+        //传感器停止
+        myOrientationListener.stop();
 
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        bt.performClick();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        bt.performClick();
         //在activity执行onResume时执行mMapView. onResume ()，实现地图生命周期管理
         mMapView.onResume();
     }
@@ -694,24 +793,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mMapView.onPause();
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        bt.performClick();
+    }
 
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        bt.performClick();
+    }
     // TODO: 2018/9/3  点击事件跳转链接
     
     @Override
     public void onClick(View v) {
 
         switch (v.getId()) {
-            case R.id.bt:
-                //把定位点再次显现出来
-
-                ObjectAnimator btanim = ObjectAnimator.ofFloat(bt, "Rotation", 0, 90, 180, 270,380,340,360);
-                btanim.setDuration(1000);
-                btanim.start();
-                MyToast.newToast(MainActivity.this,"已重新获取定位点");
-                MapStatus.Builder builder = new MapStatus.Builder();
-                builder.target(latLng).zoom(18.0f);
-                mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
-                break;
             case R.id.button:
                 if (openTraffic) {
                     MyToast.newToast(this, "实时交通已关闭");
@@ -738,57 +836,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     isSwitchMap = true;
                     buttons.setImageResource(R.drawable.ic_ordinary);
                     MyToast.newToast(this, "已切换普通地图");
-                }
-                break;
-            case R.id.nav:
-                if (ischecknav) {
-                    mBaiduMap.clear();
-                    ObjectAnimator ll_se_anim=ObjectAnimator.ofFloat(ll_st_en,"TranslationY",0,-380);
-                    ll_se_anim.setDuration(500);
-                    ll_se_anim.start();
-                    ObjectAnimator drive_anim=ObjectAnimator.ofFloat(drive,"TranslationY",0,-350);
-                    drive_anim.setDuration(500);
-                    drive_anim.start();
-                    ObjectAnimator transit_anim=ObjectAnimator.ofFloat(transit,"TranslationY",0,-350);
-                    transit_anim.setDuration(400);
-                    transit_anim.start();
-                    ObjectAnimator walk_anim=ObjectAnimator.ofFloat(walk,"TranslationY",-0,-350);
-                    walk_anim.setDuration(300);
-                    walk_anim.start();
-//                    drive.setVisibility(View.GONE);
-//                    ll_st_en.setVisibility(View.GONE);
-//                    transit.setVisibility(View.GONE);
-//                    walk.setVisibility(View.GONE);
-//                    editSt.setVisibility(View.GONE);
-//                    editEn.setVisibility(View.GONE);
-//                    tv_start.setVisibility(View.GONE);
-//                    tv_end.setVisibility(View.GONE);
-                    nav.setImageResource(R.drawable.ic_nav_close);
-                    ischecknav = false;
-                } else {
-                    mBaiduMap.clear();
-                    drive.setVisibility(View.VISIBLE);
-                    ll_st_en.setVisibility(View.VISIBLE);
-                    transit.setVisibility(View.VISIBLE);
-                    walk.setVisibility(View.VISIBLE);
-                    editSt.setVisibility(View.VISIBLE);
-                    editEn.setVisibility(View.VISIBLE);
-                    tv_start.setVisibility(View.VISIBLE);
-                    tv_end.setVisibility(View.VISIBLE);
-                    ObjectAnimator ll_se_anim=ObjectAnimator.ofFloat(ll_st_en,"TranslationY",-350,0);
-                    ll_se_anim.setDuration(500);
-                    ll_se_anim.start();
-                    ObjectAnimator drive_anim=ObjectAnimator.ofFloat(drive,"TranslationY",-350,0);
-                    drive_anim.setDuration(300);
-                    drive_anim.start();
-                    ObjectAnimator transit_anim=ObjectAnimator.ofFloat(transit,"TranslationY",-350,0);
-                    transit_anim.setDuration(400);
-                    transit_anim.start();
-                    ObjectAnimator walk_anim=ObjectAnimator.ofFloat(walk,"TranslationY",-350,0);
-                    walk_anim.setDuration(500);
-                    walk_anim.start();
-                    nav.setImageResource(R.drawable.ic_nav_open);
-                    ischecknav = true;
                 }
                 break;
             case R.id.heat:
@@ -1002,7 +1049,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //初始化图标
         bitmapDescriptor = BitmapDescriptorFactory.fromResource(R.drawable.ic_compass);
         //方向传感器监听
-        MyOrientationListener myOrientationListener = new MyOrientationListener(this);
+        myOrientationListener = new MyOrientationListener(this);
         myOrientationListener.setOnOrientationListener(new MyOrientationListener.OnOrientationListener() {
             @Override
             public void onOrientationChanged(float x) {
