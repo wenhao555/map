@@ -7,6 +7,8 @@ import android.content.IntentFilter;
 
 /**
  * Created by Administrator on 2018/9/1 0001.
+ * 监听系统锁屏广播
+ * 以接口的形式通知MainActivity启动或者关闭
  */
 
 public class ScreenBroadcastListener {

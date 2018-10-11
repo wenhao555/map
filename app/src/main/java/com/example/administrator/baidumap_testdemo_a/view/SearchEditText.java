@@ -1,14 +1,17 @@
 package com.example.administrator.baidumap_testdemo_a.view;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.support.annotation.Nullable;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -71,7 +74,11 @@ public class SearchEditText extends LinearLayout {
         mShowItme.setAdapter(adapter);
         mShowItme.setOnItemClickListener(itemClickListener);
 
-        showWindow = new PopupWindow(mShowItme, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+
+//        int height = getResources().getDisplayMetrics().heightPixels - mQuery.getBottom();
+
+
+        showWindow = new PopupWindow(mShowItme, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         showWindow.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);
         showWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         showWindow.setBackgroundDrawable(new ColorDrawable(0xFFFFFFFF));

@@ -497,9 +497,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else if (location.getLocType() == BDLocation.TypeNetWorkLocation) {
                     // 网络定位结果
                     MyToast.newToast(MainActivity.this, location.getAddrStr());
-                    str = location.getAddrStr();
-                    String[] s = str.split("市");
-                    editSt.setText(s[1]);
+//                    str = location.getAddrStr();
+//                    String[] s = str.split("省");
+//                    editSt.setText(s[1]);
                 } else if (location.getLocType() == BDLocation.TypeOffLineLocation) {
                     // 离线定位结果
                     MyToast.newToast(MainActivity.this, location.getAddrStr());

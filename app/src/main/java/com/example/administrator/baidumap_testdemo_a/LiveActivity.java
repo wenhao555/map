@@ -13,6 +13,8 @@ import com.example.administrator.baidumap_testdemo_a.Mainbaohuo.ScreenManager;
 
 /**
  * Created by Administrator on 2018/9/3 0003.
+ * 在锁屏的时候开启，1像素透明无动画
+ * 开启屏幕的时候关闭
  */
 
 public class LiveActivity extends Activity {
